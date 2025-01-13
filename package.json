@@ -11,5 +11,8 @@
     "url": "https://github.com/kanwar1413/Fragments"
   },
   "author": "KANWAR PREET KAUR",
-  "license": "UNLICENSED"
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "prettier": "3.4.2"
+  }
 }
