@@ -45,6 +45,7 @@ app.get('/', (req, res) => {
     githubUrl: 'https://github.com/kanwar1413/fragments',
     version,
   });
+
 });
 
 // Add 404 middleware to handle any requests for resources that can't be found
