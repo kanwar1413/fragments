@@ -1,4 +1,3 @@
-# Fragments
 
 # Cloud Computing for Programmers - Lab 01
 
