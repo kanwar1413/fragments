@@ -5,6 +5,8 @@ const cors = require('cors');
 const helmet = require('helmet');
 const compression = require('compression');
 
+const { createErrorResponse } = require('./response');
+
 // author and version from our package.json file
 // TODO: make sure you have updated your name in the `author` section
 //const { author, version } = require('../package.json');
@@ -64,13 +66,13 @@ app.use((err, req, res, next) => {
     logger.error({ err }, `Error processing request`);
   }
 
-  res.status(status).json({
+  res.status(status).json(createErrorResponse({
     status: 'error',
     error: {
       message,
       code: status,
     },
-  });
+  }));
 });
 
 // Export our `app` so we can access it in server.js
