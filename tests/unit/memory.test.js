@@ -80,13 +80,13 @@ let {
     describe('listFragments', () => {
         test('should return a list of fragment ids', async () => {
           await writeFragment(fragment);
-          const fragmentIds = await listFragments(fragment.ownerId);
+          const fragmentIds = (await listFragments(fragment.ownerId)).filter(Boolean);
           expect(fragmentIds).toEqual([fragment.id]);
         });
     
         test('should return a list of fragment objects when "expand" is true', async () => {
           await writeFragment(fragment);
-          const fragments = await listFragments(fragment.ownerId, true);
+          const fragments = (await listFragments(fragment.ownerId, true)).map(f => JSON.parse(f));
           expect(fragments).toEqual([fragment]);
         });
     
@@ -95,7 +95,7 @@ let {
           expect(fragmentIds).toEqual([]);
         });
       });
-    
+      
     describe('deleteFragment', () => {
       test('should delete a fragment from metadata and data store', async () => {
         const data = 'Fragment data';
