@@ -12,7 +12,7 @@ const {
   writeFragmentData,
   listFragments,
   deleteFragment,
-} = require('./data');
+} = require('./data/memory');
 
 class Fragment {
   constructor({ id, ownerId, created, updated, type, size = 0 }) {
