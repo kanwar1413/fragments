@@ -34,11 +34,6 @@ class Fragment {
       logger.error('size must be a non-negative number');
       throw new Error('size must be a non-negative number');
     }
-    if (!validTypes.includes(contentType.parse(type).type)) {
-      throw new Error(
-        `The requested '${contentType.parse(type).type}' MIME type is not supported yet.`
-      );
-    }
     this.id = id || randomUUID();
     this.ownerId = ownerId;
     this.created = created || new Date().toISOString();
