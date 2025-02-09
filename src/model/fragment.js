@@ -108,13 +108,27 @@ class Fragment {
    * @returns Promise<void>
    */
   async setData(data) {
-    if (!Buffer.isBuffer(data)) {
-      throw new Error('Data must be a Buffer');
+    // Ensure data is defined
+    if (data === undefined || data === null) {
+      throw new Error('Data must not be null or undefined');
     }
-    this.size = data.length;
-    this.updated = new Date().toISOString();
-    await writeFragmentData(this.ownerId, this.id, data);
-    await this.save();
+
+    // If data isn't a Buffer, attempt to convert it
+    if (!Buffer.isBuffer(data)) {
+      if (typeof data === 'string') {
+        data = Buffer.from(data, 'utf-8');
+      } else {
+        throw new Error('Data must be a Buffer or a string');
+      }
+  }
+
+  // Update size and timestamps for metadata
+  this.size = data.length;
+  this.updated = new Date().toISOString();
+
+  // Save data and metadata to the database
+  await writeFragmentData(this.ownerId, this.id, data);
+  await this.save();
   }
 
   /**
