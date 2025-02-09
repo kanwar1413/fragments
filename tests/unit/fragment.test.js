@@ -6,6 +6,8 @@ const wait = async (ms = 50) => new Promise((resolve) => setTimeout(resolve, ms)
 
 const validTypes = [
   `text/plain`,
+  'text/html',
+  'application/json',
   /*
    Currently, only text/plain is supported. Others will be added later.
 
