@@ -48,8 +48,6 @@ class Fragment {
    * @returns Promise<Fragment>
    */
   static async byId(ownerId, id) {
-    // TODO
-    // TIP: make sure you properly re-create a full Fragment instance after getting from db.
     const fragmentData = await readFragment(ownerId, id);
     if (!fragmentData) {
       throw new Error(`Fragment with id ${id} not found`);
@@ -81,7 +79,6 @@ class Fragment {
    * @returns Promise<Buffer>
    */
   getData() {
-    // TODO
     return readFragmentData(this.ownerId, this.id);
   }
 
@@ -91,8 +88,6 @@ class Fragment {
    * @returns Promise<void>
    */
   async setData(data) {
-    // TODO
-    // TIP: make sure you update the metadata whenever you change the data, so they match
     if (!Buffer.isBuffer(data)) {
       throw new Error('Data must be a Buffer');
     }
@@ -125,7 +120,6 @@ class Fragment {
    * @returns {Array<string>} list of supported mime types
    */
   get formats() {
-    // TODO
     if (!Buffer.isBuffer(data)) {
       throw new Error('Data must be a Buffer');
     }
