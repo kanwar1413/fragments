@@ -12,12 +12,32 @@ const {
   writeFragmentData,
   listFragments,
   deleteFragment,
-} = require('./data/memory/index');
+} = require('./data');
 
 class Fragment {
   constructor({ id, ownerId, created, updated, type, size = 0 }) {
     if (!ownerId || !type) {
       throw new Error('ownerId and type are required fields');
+    }
+    if (typeof ownerId !== 'string') {
+      throw new Error('ownerId must be a string');
+    }
+
+    if (typeof type !== 'string') {
+      throw new Error('type must be a string');
+    }
+
+    if (typeof size !== 'undefined' && typeof size !== 'number') {
+      throw new Error('size must be a number');
+    }
+    if (size < 0) {
+      logger.error('size must be a non-negative number');
+      throw new Error('size must be a non-negative number');
+    }
+    if (!validTypes.includes(contentType.parse(type).type)) {
+      throw new Error(
+        `The requested '${contentType.parse(type).type}' MIME type is not supported yet.`
+      );
     }
     this.id = id || randomUUID();
     this.ownerId = ownerId;
@@ -120,14 +140,7 @@ class Fragment {
    * @returns {Array<string>} list of supported mime types
    */
   get formats() {
-    if (!Buffer.isBuffer(data)) {
-      throw new Error('Data must be a Buffer');
-    }
-    this.size = data.length;
-    this.updated = new Date().toISOString();
-    writeFragmentData(this.ownerId, this.id, data);
-    this.save();
-  
+    return formats[this.mimeType] ? formats[this.mimeType] : [];
   }
 
   /**
