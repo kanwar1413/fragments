@@ -63,7 +63,7 @@ class Fragment {
         `The requested '${contentType.parse(type).type}' MIME type is not supported yet.`
       );
     }
-    
+
     this.id = id || randomUUID();
     this.ownerId = ownerId;
     this.created = created || new Date().toISOString();
@@ -171,7 +171,7 @@ class Fragment {
    * @returns {boolean} true if fragment's type is text/*
    */
   get isText() {
-    return readFragmentData(this.ownerId, this.id);
+    return this.mimeType.startsWith('text/');
   }
 
   /**
@@ -179,7 +179,7 @@ class Fragment {
    * @returns {Array<string>} list of supported mime types
    */
   get formats() {
-    return formats[this.mimeType] ? formats[this.mimeType] : [];
+    return formats[this.mimeType] || [];
   }
 
   /**
