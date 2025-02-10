@@ -79,11 +79,7 @@ class Fragment {
    * @returns Promise<Array<Fragment>>
    */
   static async byUser(ownerId, expand = false) {
-    const fragments = await listFragments(ownerId);
-    if (!expand) {
-      return fragments.map((fragment) => fragment.id);
-    }
-    return Promise.all(fragments.map(async (frag) => new Fragment(await readFragment(ownerId, frag.id))));
+    return listFragments(ownerId, expand);
   }
 
   /**
@@ -93,13 +89,13 @@ class Fragment {
    * @returns Promise<Fragment>
    */
   static async byId(ownerId, id) {
-    const fragmentData = await readFragment(ownerId, id);
-    if (!fragmentData) {
-      throw new Error(`Fragment with id ${id} not found`);
-    }
-    return new Fragment(fragmentData);
-  }
+    let data = await readFragment(ownerId, id);
 
+    if (!data) {
+      return Promise.reject(new Error('Not Found'));
+    }
+    return Promise.resolve(data);
+  }
   /**
    * Delete the user's fragment data and metadata for the given id
    * @param {string} ownerId user's hashed email
@@ -116,7 +112,7 @@ class Fragment {
    */
   save() {
     this.updated = new Date().toISOString();
-    return writeFragment(this.ownerId, this);
+    return writeFragment(this);
   }
 
   /**
@@ -133,28 +129,11 @@ class Fragment {
    * @returns Promise<void>
    */
   async setData(data) {
-    // Ensure data is defined
-    if (data === undefined || data === null) {
-      throw new Error('Data must not be null or undefined');
+    if (!(Buffer.isBuffer(data) || data)) throw new Error('supplied data is not Buffer');
+      this.size = data.byteLength;
+      this.save();
+      return writeFragmentData(this.ownerId, this.id, data);
     }
-
-    // If data isn't a Buffer, attempt to convert it
-    if (!Buffer.isBuffer(data)) {
-      if (typeof data === 'string') {
-        data = Buffer.from(data, 'utf-8');
-      } else {
-        throw new Error('Data must be a Buffer or a string');
-      }
-  }
-
-  // Update size and timestamps for metadata
-  this.size = data.length;
-  this.updated = new Date().toISOString();
-
-  // Save data and metadata to the database
-  await writeFragmentData(this.ownerId, this.id, data);
-  await this.save();
-  }
 
   /**
    * Returns the mime type (e.g., without encoding) for the fragment's type:
