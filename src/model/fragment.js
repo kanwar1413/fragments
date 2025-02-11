@@ -1,24 +1,24 @@
 const { randomUUID } = require('crypto');
 const contentType = require('content-type');
-const logger =require('../logger')
+const logger = require('../logger');
 const {
   readFragment,
   writeFragment,
   readFragmentData,
   writeFragmentData,
-  listFragments, 
+  listFragments,
   deleteFragment,
 } = require('./data/memory');
 
 const validTypes = [
-  `text/plain`,
-  `text/markdown`,
-  `text/html`,
-  `application/json`,
-  `image/png`,
-  `image/jpeg`,
-  `image/webp`,
-  `image/gif`,
+  'text/plain',
+  'text/markdown',
+  'text/html',
+  'application/json',
+  'image/png',
+  'image/jpeg',
+  'image/webp',
+  'image/gif',
 ];
 
 const formats = {
@@ -87,7 +87,7 @@ class Fragment {
   static async byUser(ownerId, expand = false) {
     const fragmentList = await listFragments(ownerId);
     if (!expand) return fragmentList;
-    return Promise.all(fragmentList.map(id => Fragment.byId(ownerId, id)));
+    return Promise.all(fragmentList.map(id => Fragment.byId(ownerId, id)));
   }
 
   /**
@@ -98,7 +98,7 @@ class Fragment {
    */
   static delete(ownerId, id) {
     return deleteFragment(ownerId, id);
-  }  
+  }
 
   /**
    * Saves the current fragment (metadata) to the database
