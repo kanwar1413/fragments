@@ -1,16 +1,12 @@
-// Use crypto.randomUUID() to create unique IDs, see:
-// https://nodejs.org/api/crypto.html#cryptorandomuuidoptions
 const { randomUUID } = require('crypto');
-// Use https://www.npmjs.com/package/content-type to create/parse Content-Type headers
 const contentType = require('content-type');
 
-// Functions for working with fragment metadata/data using our DB
 const {
   readFragment,
   writeFragment,
   readFragmentData,
   writeFragmentData,
-  listFragments,
+  listFragments, 
   deleteFragment,
 } = require('./data/memory');
 
@@ -73,16 +69,6 @@ class Fragment {
   }
 
   /**
-   * Get all fragments (id or full) for the given user
-   * @param {string} ownerId user's hashed email
-   * @param {boolean} expand whether to expand ids to full fragments
-   * @returns Promise<Array<Fragment>>
-   */
-  static async byUser(ownerId, expand = false) {
-    return listFragments(ownerId, expand);
-  }
-
-  /**
    * Gets a fragment for the user by the given id.
    * @param {string} ownerId user's hashed email
    * @param {string} id fragment's id
@@ -92,9 +78,21 @@ class Fragment {
     let data = await readFragment(ownerId, id);
 
     if (!data) {
-      return Promise.reject(new Error('Not Found'));
+      return Promise.reject(new Error(`Fragment with ID '${id}' does not exist.`));
     }
-    return Promise.resolve(data);
+    return new Fragment(data);
+  }
+
+  /**
+   * Get all fragments (id or full) for the given user
+   * @param {string} ownerId user's hashed email
+   * @param {boolean} expand whether to expand ids to full fragments
+   * @returns Promise<Array<Fragment>>
+   */
+  static async byUser(ownerId, expand = false) {
+    const fragmentList = await listFragments(ownerId);
+    if (!expand) return fragmentList;
+    return Promise.all(fragmentList.map(id => Fragment.byId(ownerId, id)));
   }
   /**
    * Delete the user's fragment data and metadata for the given id
@@ -105,6 +103,7 @@ class Fragment {
   static delete(ownerId, id) {
     return deleteFragment(ownerId, id);
   }
+  
 
   /**
    * Saves the current fragment (metadata) to the database
@@ -119,8 +118,8 @@ class Fragment {
    * Gets the fragment's data from the database
    * @returns Promise<Buffer>
    */
-  getData() {
-    return readFragmentData(this.ownerId, this.id);
+  async getData() {
+    return await readFragmentData(this.ownerId, this.id);
   }
 
   /**
@@ -130,10 +129,10 @@ class Fragment {
    */
   async setData(data) {
     if (!(Buffer.isBuffer(data) || data)) throw new Error('supplied data is not Buffer');
-      this.size = data.byteLength;
-      this.save();
-      return writeFragmentData(this.ownerId, this.id, data);
-    }
+    this.size = data.byteLength;
+    await this.save();
+    return writeFragmentData(this.ownerId, this.id, data);
+  }
 
   /**
    * Returns the mime type (e.g., without encoding) for the fragment's type:
@@ -167,9 +166,13 @@ class Fragment {
    * @returns {boolean} true if we support this Content-Type (i.e., type/subtype)
    */
   static isSupportedType(value) {
-    const supportedTypes = ['text/plain', 'text/html', 'application/json'];
-    const { type } = contentType.parse(value);
-    return supportedTypes.includes(type);
+    return validTypes.includes(contentType.parse(value).type);
   }
 }
+module.exports.Fragment = {
+  byId: (id) => {
+    // Your logic here
+  },
+};
+
 module.exports.Fragment = Fragment;

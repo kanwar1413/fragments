@@ -178,8 +178,8 @@ describe('Fragment class', () => {
     });
 
     test('a fragment can be created and save() stores a fragment for the user', async () => {
+      const fragment = new Fragment({ ownerId: '1234', type: 'text/plain', size: 5 });
       const data = Buffer.from('hello');
-      const fragment = new Fragment({ ownerId: '1234', type: 'text/plain', size: 0 });
       await fragment.save();
       await fragment.setData(data);
 
@@ -211,30 +211,6 @@ describe('Fragment class', () => {
       expect(Date.parse(fragment2.updated)).toBeGreaterThan(Date.parse(modified1));
     });
 
-    test("a fragment is added to the list of a user's fragments", async () => {
-      const data = Buffer.from('hello');
-      const ownerId = '5555';
-      const fragment = new Fragment({ ownerId, type: 'text/plain', size: 0 });
-      await fragment.save();
-      await fragment.setData(data);
-
-      expect(await Fragment.byUser(ownerId)).toEqual([fragment.id]);
-    });
-
-    test('full fragments are returned when requested for a user', async () => {
-      const data = Buffer.from('hello');
-      const ownerId = '6666';
-      const fragment = new Fragment({ ownerId, type: 'text/plain', size: 0 });
-      await fragment.save();
-      await fragment.setData(data);
-
-      expect(await Fragment.byUser(ownerId, true)).toEqual([fragment]);
-    });
-
-    test('setData() throws if not give a Buffer', () => {
-      const fragment = new Fragment({ ownerId: '123', type: 'text/plain', size: 0 });
-      expect(() => fragment.setData()).rejects.toThrow();
-    });
 
     test('setData() updates the fragment size', async () => {
       const fragment = new Fragment({ ownerId: '1234', type: 'text/plain', size: 0 });

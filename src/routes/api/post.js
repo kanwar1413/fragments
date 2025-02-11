@@ -1,40 +1,73 @@
-const { Fragment } = require('../../model/fragment');
-const { createSuccessResponse, createErrorResponse } = require('../../response');
+// Required dependencies
+const express = require('express');
+const router = express.Router();
 const contentType = require('content-type');
-const { randomUUID } = require('crypto');
+const { Fragment } = require('../../model/fragment');
+const crypto = require('crypto');
+const rawBody = require('../index'); // Ensure this points to the correct raw body parser
 
-module.exports = async (req, res) => {
-  if (!Buffer.isBuffer(req.body) || !req.headers['content-type']) {
-    return res.status(400).json(createErrorResponse(400, 'Invalid or missing Content-Type'));
-  }
-
-  const { type } = contentType.parse(req);
-  if (!Fragment.isSupportedType(type)) {
-    return res.status(415).json(createErrorResponse(415, `Unsupported Content-Type: ${type}`));
-  }
-
+// POST route handler for /fragments
+router.post('/fragments', async (req, res) => {
   try {
-    const id = randomUUID();
-    const created = new Date().toISOString();
+    // Check if the request body is a Buffer
+    if (!Buffer.isBuffer(req.body)) {
+      return res.status(415).json({ error: 'Unsupported content type' });
+    }
 
-    const fragment = new Fragment({ id, type, size: req.body.length });
+    // Check if the body is empty
+    if (req.body.length === 0) {
+      return res.status(400).json({ error: 'Invalid or unsupported content type' });
+    }
+
+    // Parse the Content-Type header
+    const { type } = contentType.parse(req);
+
+    // Extract ownerId from the request headers
+    const ownerId = req.headers['x-owner-id'];
+    if (!ownerId) {
+      return res.status(400).json({ error: 'Missing ownerId in request headers' });
+    }
+
+    // Validate the content type for supported types
+    if (!Fragment.isSupportedType(type)) {
+      return res.status(415).json({ error: `Unsupported content type: ${type}` });
+    }
+
+    // Generate a random ID using crypto (instead of uuid)
+    const id = crypto.randomBytes(16).toString('hex'); // This generates a 32-character hex string
+
+    // Create a new fragment instance
+    const fragment = new Fragment({
+      ownerId,
+      id,
+      type,
+      size: req.body.length,
+    });
+
+    // Save the fragment metadata and data
     await fragment.save();
     await fragment.setData(req.body);
 
-    // Use API_URL if defined; fallback to request host
-    const apiUrl = process.env.API_URL || `http://${req.headers.host}`;
-    const locationUrl = new URL(`/v1/fragments/${id}`, apiUrl).toString();
+    // Generate Location header for the newly created resource
+    const fragmentUrl = `${req.protocol}://${req.get('host')}/v1/fragments/${fragment.id}`;
 
     res.status(201)
-      .location(locationUrl)
-      .json(createSuccessResponse({
-        id,
-        created,
-        type,
-        size: req.body.length,
-        location: locationUrl,
-      }));
-  } catch (error) {
-    res.status(500).json(createErrorResponse(500, 'Internal Server Error'));
+      .set('Location', fragmentUrl)
+      .json({
+        status: 'ok',
+        fragment: {
+          id: fragment.id,
+          ownerId: fragment.ownerId,
+          created: fragment.created,
+          updated: fragment.updated,
+          type: fragment.type,
+          size: fragment.size,
+        },
+      });
+  } catch (err) {
+    console.error('Error handling request:', err);
+    res.status(500).json({ error: 'Internal Server Error' });
   }
-};
+});
+
+module.exports = router;

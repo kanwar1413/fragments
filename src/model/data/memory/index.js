@@ -4,6 +4,9 @@ const MemoryDB = require('./memory-db');
 const data = new MemoryDB();
 const metadata = new MemoryDB();
 
+
+module.exports = require('../memory');
+
 // Write a fragment's metadata to memory db. Returns a Promise<void>
 function writeFragment(fragment) {
   // Simulate db/network serialization of the value, storing only JSON representation.
@@ -31,7 +34,6 @@ function readFragmentData(ownerId, id) {
   return data.get(ownerId, id);
 }
 
-// Get a list of fragment ids/objects for the given user from memory db. Returns a Promise
 async function listFragments(ownerId, expand = false) {
   const fragments = await metadata.query(ownerId);
 
