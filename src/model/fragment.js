@@ -1,7 +1,6 @@
 const { randomUUID } = require('crypto');
 const contentType = require('content-type');
-const logger = require('../../logger');
-
+const logger =require('../logger')
 const {
   readFragment,
   writeFragment,
