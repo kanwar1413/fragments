@@ -1,72 +1,56 @@
-// Required dependencies
-const express = require('express');
-const router = express.Router();
-const contentType = require('content-type');
+const { createSuccessResponse } = require('../../response');
+const { createErrorResponse } = require('../../response');
 const { Fragment } = require('../../model/fragment');
-const crypto = require('crypto');
+const logger = require('../../logger');
 
-// POST route handler for /fragments
-router.post('/fragments', async (req, res) => {
-  try {
-    // Check if the request body is a Buffer
-    if (!Buffer.isBuffer(req.body)) {
-      return res.status(415).json({ error: 'Unsupported content type' });
-    }
-
-    // Check if the body is empty
-    if (req.body.length === 0) {
-      return res.status(400).json({ error: 'Invalid or unsupported content type' });
-    }
-
-    // Parse the Content-Type header
-    const { type } = contentType.parse(req);
-
-    // Extract ownerId from the request headers
-    const ownerId = req.headers['x-owner-id'];
-    if (!ownerId) {
-      return res.status(400).json({ error: 'Missing ownerId in request headers' });
-    }
-
-    // Validate the content type for supported types
-    if (!Fragment.isSupportedType(type)) {
-      return res.status(415).json({ error: `Unsupported content type: ${type}` });
-    }
-
-    // Generate a random ID using crypto (instead of uuid)
-    const id = crypto.randomBytes(16).toString('hex'); // This generates a 32-character hex string
-
-    // Create a new fragment instance
-    const fragment = new Fragment({
-      ownerId,
-      id,
-      type,
-      size: req.body.length,
-    });
-
-    // Save the fragment metadata and data
-    await fragment.save();
-    await fragment.setData(req.body);
-
-    // Generate Location header for the newly created resource
-    const fragmentUrl = `${req.protocol}://${req.get('host')}/v1/fragments/${fragment.id}`;
-
-    res.status(201)
-      .set('Location', fragmentUrl)
-      .json({
-        status: 'ok',
-        fragment: {
-          id: fragment.id,
-          ownerId: fragment.ownerId,
-          created: fragment.created,
-          updated: fragment.updated,
-          type: fragment.type,
-          size: fragment.size,
-        },
-      });
-  } catch (err) {
-    console.error('Error handling request:', err);
-    res.status(500).json({ error: 'Internal Server Error' });
+module.exports = async (req, res) => {
+  // Early return if req.body is not a Buffer
+  if (!Buffer.isBuffer(req.body)) {
+    logger.warn('Content-Type is not supported for POST');
+    return res
+      .status(415)
+      .json(
+        createErrorResponse(
+          415,
+          'The Content-Type of the fragment being sent with the request is not supported'
+        )
+      );
   }
-});
 
-module.exports = router;
+  // Check if the body is empty (or invalid)
+  if (req.body.length === 0) {
+    logger.warn('Fragment body is empty');
+    return res
+      .status(400)
+      .json(createErrorResponse(400, 'Fragment data cannot be empty'));
+  }
+
+  // Proceed with the rest of the code if req.body is a Buffer
+  logger.info('v1/fragments POST route works');
+
+  // Get the headers from the request
+  const headers = req.headers;
+  // Access specific header properties
+  const contentType = headers['content-type'];
+
+  // Create a new fragment
+  let fragmentData = new Fragment({
+    ownerId: req.user,
+    type: contentType,
+    size: req.body.length,
+  });
+  logger.debug({ fragmentData }, 'A fragment is created');
+
+  const host = process.env.API_URL || req.headers.host;
+
+  // ADD Location header
+  res.location(`host + /v1/fragments/${fragmentData.id}`);
+
+  // Save fragment metadata
+  await fragmentData.save();
+  // Save fragment data
+  await fragmentData.setData(req.body);
+
+  // Respond with success
+  res.status(201).json(createSuccessResponse({ fragment: fragmentData }));
+};

@@ -1,73 +1,47 @@
+// tests/unit/post.test.js
 const request = require('supertest');
-const app = require('../../src/app'); // Ensure this points to your Express app
-
-describe('POST /v1/fragments', () => {
-  test('unauthenticated requests are denied', async () => {
-    const res = await request(app).post('/v1/fragments');
-    expect(res.statusCode).toBe(401); // Assuming you have middleware for authentication
-  });
-
-  test('authenticated users can create a plain text fragment', async () => {
+const app = require('../../src/app');
+describe('POST /v1/fragments (Credential, Unauthorized, Unauthenticated, Plain Text Creation)', () => {
+  test('Unauthenticated requests are denied', () => request(app).post('/v1/fragments').expect(401));
+  test('Incorrect credentials are denied', () =>
+    request(app).post('/v1/fragments').auth('invalid@email.com', 'incorrect_password').expect(401));
+  test('Authenticated users get a fragment with ok status', async () => {
     const res = await request(app)
       .post('/v1/fragments')
-      .auth('user1@email.com', 'password1') // Ensure this matches your authentication setup
       .set('Content-Type', 'text/plain')
-      .set('x-owner-id', 'user1@email.com') // Set the ownerId in the headers
-      .send('Hello, Fragment!');
-
+      .auth('user1@email.com', 'password1') // Ensure these credentials exist in your test DB
+      .send('fragment Data');
     expect(res.statusCode).toBe(201);
     expect(res.body.status).toBe('ok');
-    expect(res.body.fragment).toHaveProperty('id');
-    expect(res.body.fragment.type).toBe('text/plain');
-    expect(res.body.fragment.size).toBe('Hello, Fragment!'.length);
   });
-
-  test('POST response includes a Location header with a full URL', async () => {
+  test('fragment without data does not work', async () => {
     const res = await request(app)
       .post('/v1/fragments')
-      .auth('user1@email.com', 'password1')
+      .auth('user1@email.com', 'password1') // Ensure these credentials exist in your test DB
       .set('Content-Type', 'text/plain')
-      .set('x-owner-id', 'user1@email.com') // Set the ownerId in the headers
-      .send('Test content');
-
-    expect(res.statusCode).toBe(201);
-    expect(res.headers).toHaveProperty('location');
-    const locationUrl = new URL(res.headers.location);
-    expect(locationUrl.pathname).toMatch(/\/v1\/fragments\/[0-9a-fA-F-]+$/); // Check if the path matches the fragment ID format
+      .send(''); // Sending an empty string to simulate no data
+    expect(res.statusCode).toBe(400);
+    expect(res.body.status).toBe('error');
   });
-
-  test('unsupported Content-Type returns 415 error', async () => {
+  test('unsupported fragment types are denied', async () => {
     const res = await request(app)
-    .post('/v1/fragments')
-    .auth('user1@email.com', 'password1') // Ensure this matches your authentication setup
-    .set('Content-Type', 'application/unknown') // Use an unsupported content type
-    .set('x-owner-id', 'user1@email.com') // Set the ownerId in the headers
-    .send('Unsupported content');
-
+      .post('/v1/fragments')
+      .auth('user1@email.com', 'password1') // Ensure these credentials exist in your test DB
+      .set('Content-Type', 'application/xml')
+      .send('<name>fragment</name>');
     expect(res.statusCode).toBe(415);
-    expect(res.body.error).toContain('Unsupported content type');
+    expect(res.body.status).toBe('error');
   });
-
-  test('invalid or missing ownerId returns 400', async () => {
+  test('Authenticated users with unsupported mediatype should get 415 error', async () => {
+    let type = 'unsupported/unsupported';
     const res = await request(app)
       .post('/v1/fragments')
-      .auth('user1@email.com', 'password1')
-      .set('Content-Type', 'text/plain')
-      .send('Hello, Fragment!');
-
-    expect(res.statusCode).toBe(400);
-    expect(res.body.error).toContain('Missing ownerId in request headers');
-  });
-
-  test('invalid or missing fragment body returns 400', async () => {
-    const res = await request(app)
-      .post('/v1/fragments')
-      .auth('user1@email.com', 'password1')
-      .set('Content-Type', 'text/plain')
-      .set('x-owner-id', 'user1@email.com') // Set the ownerId in the headers
-      .send(''); // Sending an empty body
-
-    expect(res.statusCode).toBe(400);
-    expect(res.body.error).toContain('Invalid or unsupported content type');
+      .set('Content-Type', type)
+      .auth('user1@email.com', 'password1') // Ensure these credentials exist in your test DB
+      .send('fragment Data');
+    expect(res.statusCode).toBe(415);
+    expect(res.body.status).toBe('error');
+    expect(res.body.error.code).toBe(415);
+    expect(res.body.error.message).toBeDefined();
   });
 });

@@ -14,8 +14,8 @@ const { Fragment } = require('../../model/fragment');
 
 // Define our first route, which will be: GET /v1/fragments
 router.get('/fragments', require('./get'));
-// GET /v1/fragments/:id.ext
-router.get('/fragments/:id.:ext', require('./get'));
+// GET /v1/fragments/:id
+router.get('/fragments/:id', require('./getID'));
 
 
 // Support sending various Content-Types on the body up to 5M in size
