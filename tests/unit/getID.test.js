@@ -93,25 +93,5 @@ describe('GET /v1/fragment/:id', () => {
     expect(response.status).toBe(200);
   });
 
-  // New test case to cover getData() error handling
-  test('should return 404 when getData() fails', async () => {
-    const testFragmentWithDataError = {
-      ...testFragment,
-      getData: jest.fn().mockRejectedValue(new Error('Failed to retrieve data')),
-    };
-
-    Fragment.byId.mockResolvedValue(testFragmentWithDataError);
-
-    const response = await request(app)
-      .get('/v1/fragment/06dbf21a-52c0-4d03-87a9-8d567bd8673e');
-
-    expect(response.status).toBe(404);
-    expect(response.body).toEqual({
-      status: 'error',
-      error: {
-        code: 404,
-        message: 'An error occurred while retrieving fragment data',
-      },
-    });
-  });
+ 
 });

@@ -18,21 +18,10 @@ module.exports = async (req, res) => {
   }
 
   let data;
-  try {
-    data = extension
-      ? await fragment.convertFragment(extension)
-      : await fragment.getData();
-  } catch (error) {
-    // If getData() fails, return a 404 instead of falling into the catch block
-    return res.status(404).json({
-      status: 'error',
-      error: {
-        code: 404,
-        message: 'An error occurred while retrieving fragment data',
-      },
-    });
-  }
-
+  data = extension
+    ? await fragment.convertFragment(extension)
+    : await fragment.getData();
+  
     logger.debug(fragment.mimeType, 'Fragment type');
     res.setHeader('Content-Type', fragment.type);
     res.setHeader('Content-Length', fragment.size);
