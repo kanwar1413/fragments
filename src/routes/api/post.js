@@ -3,7 +3,7 @@ const { createErrorResponse } = require('../../response');
 const { Fragment } = require('../../model/fragment');
 const logger = require('../../logger');
 
-const host = process.env.API_URL || req.headers.host;
+const host = process.env.API_URL ;
 
 module.exports = async (req, res) => {
   // Early return if req.body is not a Buffer
