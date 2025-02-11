@@ -41,7 +41,6 @@ module.exports = async (req, res) => {
   });
   logger.debug({ fragmentData }, 'A fragment is created');
 
-  const host = process.env.API_URL || req.headers.host;
 
   // ADD Location header
   res.location(`host + /v1/fragments/${fragmentData.id}`);
