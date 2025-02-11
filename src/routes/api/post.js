@@ -3,7 +3,7 @@ const { createErrorResponse } = require('../../response');
 const { Fragment } = require('../../model/fragment');
 const logger = require('../../logger');
 
-const host = process.env.API_URL ;
+//const host = process.env.API_URL ;
 
 module.exports = async (req, res) => {
   // Early return if req.body is not a Buffer
@@ -45,7 +45,7 @@ module.exports = async (req, res) => {
 
 
   // ADD Location header
-  res.location(`${host}/v1/fragments/${fragmentData.id}`);
+  res.location(`${req.protocol}://${req.headers.host}/v1/fragments/${fragmentData.id}`);
 
   // Save fragment metadata
   await fragmentData.save();
