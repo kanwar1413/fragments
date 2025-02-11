@@ -32,7 +32,6 @@ const formats = {
   'image/gif': ['image/png', 'image/jpeg', 'image/webp', 'image/gif'],
 };
 
-
 class Fragment {
   constructor({ id, ownerId, created, updated, type, size = 0 }) {
     if (!ownerId || !type) {
@@ -41,11 +40,9 @@ class Fragment {
     if (typeof ownerId !== 'string') {
       throw new Error('ownerId must be a string');
     }
-
     if (typeof type !== 'string') {
       throw new Error('type must be a string');
     }
-
     if (typeof size !== 'undefined' && typeof size !== 'number') {
       throw new Error('size must be a number');
     }
@@ -53,13 +50,11 @@ class Fragment {
       logger.error('size must be a non-negative number');
       throw new Error('size must be a non-negative number');
     }
-
     if (!validTypes.includes(contentType.parse(type).type)) {
       throw new Error(
         `The requested '${contentType.parse(type).type}' MIME type is not supported yet.`
       );
     }
-
     this.id = id || randomUUID();
     this.ownerId = ownerId;
     this.created = created || new Date().toISOString();
@@ -94,6 +89,7 @@ class Fragment {
     if (!expand) return fragmentList;
     return Promise.all(fragmentList.map(id => Fragment.byId(ownerId, id)));
   }
+
   /**
    * Delete the user's fragment data and metadata for the given id
    * @param {string} ownerId user's hashed email
@@ -102,8 +98,7 @@ class Fragment {
    */
   static delete(ownerId, id) {
     return deleteFragment(ownerId, id);
-  }
-  
+  }  
 
   /**
    * Saves the current fragment (metadata) to the database
@@ -169,10 +164,5 @@ class Fragment {
     return validTypes.includes(contentType.parse(value).type);
   }
 }
-module.exports.Fragment = {
-  byId: (id) => {
-    // Your logic here
-  },
-};
 
 module.exports.Fragment = Fragment;
