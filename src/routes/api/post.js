@@ -4,7 +4,6 @@ const router = express.Router();
 const contentType = require('content-type');
 const { Fragment } = require('../../model/fragment');
 const crypto = require('crypto');
-const rawBody = require('../index'); // Ensure this points to the correct raw body parser
 
 // POST route handler for /fragments
 router.post('/fragments', async (req, res) => {

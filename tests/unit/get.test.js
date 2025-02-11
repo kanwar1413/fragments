@@ -1,5 +1,5 @@
 // tests/unit/get.test.js
-const contentType = require('content-type');
+
 const request = require('supertest');
 const app = require('../../src/app');
 

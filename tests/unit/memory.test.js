@@ -4,8 +4,8 @@ let {
     readFragmentData,
     writeFragment,
     writeFragmentData,
-    listFragments,
-    deleteFragment,
+    //listFragments,
+    //deleteFragment,
   } = require('../../src/model/data/memory');
   
   describe('Fragment Module', () => {
