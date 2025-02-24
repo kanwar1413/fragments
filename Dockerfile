@@ -1,7 +1,7 @@
 #
 
-# FROM specifies the parent (or base) image to use as a starting point for our own image.
-FROM node:20.11.1
+# Use the Alpine-based Node.js image as the base
+FROM node:20.11.1-alpine
 
 # The LABEL instruction adds key=value pairs with arbitrary metadata about your image
 LABEL maintainer="Kanwar Preet Kaur <kkaur531@myseneca.ca>"
@@ -17,6 +17,7 @@ ENV NPM_CONFIG_LOGLEVEL=warn
 # Disable colour when run inside Docker
 # https://docs.npmjs.com/cli/v8/using-npm/config#color
 ENV NPM_CONFIG_COLOR=false
+
 
 # Use /app as our working directory
 WORKDIR /app
