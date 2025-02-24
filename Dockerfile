@@ -7,6 +7,9 @@ FROM node:20.11.1-alpine
 LABEL maintainer="Kanwar Preet Kaur <kkaur531@myseneca.ca>"
 LABEL description="Fragments node.js microservice"
 
+# Set the environment variable for production
+ENV NODE_ENV=production
+
 # We default to use port 8080 in our service
 ENV PORT=8080
 
@@ -27,8 +30,8 @@ WORKDIR /app
 # files.  All of the files will be copied into the working dir `./app`
 COPY package.json package-lock.json ./
 
-# Install node dependencies defined in package-lock.json
-RUN npm install
+# Install only production node dependencies defined in package-lock.json
+RUN npm install --only=production && npm cache clean --force
 
 # Copy src to /app/src/
 COPY ./src ./src
@@ -36,14 +39,13 @@ COPY ./src ./src
 # Start the container by running our server
 CMD npm start
 
-# We run our service on port 8080
-EXPOSE 8080
-
-# Copy src/
-COPY ./src ./src
-
 # Copy our HTPASSWD file
 COPY ./tests/.htpasswd ./tests/.htpasswd
 
-# Run the server
-CMD npm start
+
+# We run our service on port 8080
+EXPOSE 8080
+
+#Start the container by running our server
+CMD ["npm", "start"]
+
