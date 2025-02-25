@@ -1,51 +1,41 @@
-#
+# Stage 1: Build Stage
+FROM node:20.11.1-alpine AS builder
 
-# Use the Alpine-based Node.js image as the base
-FROM node:20.11.1-alpine
-
-# The LABEL instruction adds key=value pairs with arbitrary metadata about your image
+# Metadata
 LABEL maintainer="Kanwar Preet Kaur <kkaur531@myseneca.ca>"
-LABEL description="Fragments node.js microservice"
+LABEL description="Fragments Node.js microservice"
 
-# Set the environment variable for production
+# Set environment variables for production
 ENV NODE_ENV=production
-
-# We default to use port 8080 in our service
 ENV PORT=8080
-
-# Reduce npm spam when installing within Docker
-# https://docs.npmjs.com/cli/v8/using-npm/config#loglevel
 ENV NPM_CONFIG_LOGLEVEL=warn
-
-# Disable colour when run inside Docker
-# https://docs.npmjs.com/cli/v8/using-npm/config#color
 ENV NPM_CONFIG_COLOR=false
 
-
-# Use /app as our working directory
+# Set working directory
 WORKDIR /app
 
-# Option 3: explicit filenames - Copy the package.json and package-lock.json
-# files into the working dir (/app), using full paths and multiple source
-# files.  All of the files will be copied into the working dir `./app`
+# Copy package files and install only production dependencies
 COPY package.json package-lock.json ./
+RUN npm ci --only=production && npm cache clean --force
 
-# Install only production node dependencies defined in package-lock.json
-RUN npm install --only=production && npm cache clean --force
-
-# Copy src to /app/src/
+# Copy source code
 COPY ./src ./src
 
-# Start the container by running our server
-CMD npm start
-
-# Copy our HTPASSWD file
+# Copy the HTPASSWD file
 COPY ./tests/.htpasswd ./tests/.htpasswd
 
 
-# We run our service on port 8080
+# Stage 2: Production Stage (Final Image)
+FROM node:20.11.1-alpine
+
+# Set working directory
+WORKDIR /app
+
+# Copy built application from the previous stage
+COPY --from=builder /app /app
+
+# Expose required port
 EXPOSE 8080
 
-#Start the container by running our server
+# Start the server
 CMD ["npm", "start"]
-
