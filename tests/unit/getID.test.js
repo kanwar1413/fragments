@@ -1,7 +1,7 @@
 const request = require('supertest');
 const express = require('express');
 const { Fragment } = require('../../src/model/fragment');
-const getId = require('../../src/routes/api/getID');
+const getByIdRoute = require('../../src/routes/api/getID');
 const app = express();
 app.use(express.json());
 
@@ -10,20 +10,20 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use('/v1/fragment', getId);
+app.use('/v1/fragment', getByIdRoute);
 
 jest.mock('../../src/model/fragment');
 
 describe('GET /v1/fragment/:id', () => {
-  const testFragmentData = Buffer.from('fragment data');
-  const testFragment = {
+  const mockFragmentData = Buffer.from('fragment data');
+  const mockFragment = {
     id: '06dbf21a-52c0-4d03-87a9-8d567bd8673e',
     ownerId: 'ownerId',
     created: '2024-10-05T20:44:37.547Z',
     updated: '2024-10-05T20:44:37.548Z',
     type: 'text/plain',
     size: 13,
-    getData: jest.fn().mockResolvedValue(testFragmentData),
+    getData: jest.fn().mockResolvedValue(mockFragmentData),
   };
 
   beforeEach(() => {
@@ -31,7 +31,7 @@ describe('GET /v1/fragment/:id', () => {
   });
 
   test('should return a fragment when found', async () => {
-    Fragment.byId.mockResolvedValue(testFragment);
+    Fragment.byId.mockResolvedValue(mockFragment);
 
     const response = await request(app)
       .get('/v1/fragment/06dbf21a-52c0-4d03-87a9-8d567bd8673e');
@@ -73,7 +73,7 @@ describe('GET /v1/fragment/:id', () => {
   });
 
   test('should return the fragment data with the correct Content-Type and Content-Length headers', async () => {
-    Fragment.byId.mockResolvedValue(testFragment);
+    Fragment.byId.mockResolvedValue(mockFragment);
 
     const response = await request(app)
       .get('/v1/fragment/06dbf21a-52c0-4d03-87a9-8d567bd8673e');
@@ -85,7 +85,7 @@ describe('GET /v1/fragment/:id', () => {
   });
 
   test('should return the correct fragment data when the ID matches', async () => {
-    Fragment.byId.mockResolvedValue(testFragment);
+    Fragment.byId.mockResolvedValue(mockFragment);
 
     const response = await request(app)
       .get('/v1/fragment/06dbf21a-52c0-4d03-87a9-8d567bd8673e');
@@ -93,5 +93,25 @@ describe('GET /v1/fragment/:id', () => {
     expect(response.status).toBe(200);
   });
 
- 
+  // New test case to cover getData() error handling
+  test('should return 404 when getData() fails', async () => {
+    const mockFragmentWithDataError = {
+      ...mockFragment,
+      getData: jest.fn().mockRejectedValue(new Error('Failed to retrieve data')),
+    };
+
+    Fragment.byId.mockResolvedValue(mockFragmentWithDataError);
+
+    const response = await request(app)
+      .get('/v1/fragment/06dbf21a-52c0-4d03-87a9-8d567bd8673e');
+
+    expect(response.status).toBe(404);
+    expect(response.body).toEqual({
+      status: 'error',
+      error: {
+        code: 404,
+        message: 'An error occurred while retrieving fragment data',
+      },
+    });
+  });
 });
