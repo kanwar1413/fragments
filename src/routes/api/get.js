@@ -17,10 +17,6 @@ module.exports = async (req, res) => {
     logger.info(`Found ${fragments.length} fragments for user ${ownerId}`);
     
     // Send the fragments back in the response
-    const responseData = expandFlag
-      ? { fragments: fragments }  // Full metadata when expand=1
-      : { fragments: fragments.map(fragment => fragment.id) };  // Only IDs when no expand
-
     res.status(200).json(createSuccessResponse({ fragments: [...fragments] }));
     logger.info(`Successfully fetched fragments for user ${ownerId}`);
   } catch (error) {
