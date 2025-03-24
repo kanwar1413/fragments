@@ -40,6 +40,7 @@ user1@email.com:password1
 HTTP/1.1 200
 Content-Length: 38
 Content-Type: text/plain; charset=utf-8
+
 [Asserts]
 # The next line matches header for just text/plain with charset=utf-8.
 header "Content-Type" matches "^text/plain; charset=utf-8$"
