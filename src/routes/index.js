@@ -12,13 +12,6 @@ const { createSuccessResponse } = require('../response');
 // Create a router that we can use to mount our API
 const router = express.Router();
 
-router.use((req, res, next) => {
-  if (!req.headers['content-type']) {
-    req.headers['content-type'] = 'text/plain';
-  }
-  next();
-});
-
 
 /**
  * Expose all of our API routes on /v1/* to include an API version.

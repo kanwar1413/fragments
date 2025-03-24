@@ -20,8 +20,21 @@ describe('GET /v1/fragments', () => {
   });
 
    // Test expand query for full fragment details
-  test('expand query parameter returns full fragment details', async () => {
+  test('expand query parameter returns full fragment details (expand=true)', async () => {
     const res = await request(app).get('/v1/fragments?expand=true').auth('user1@email.com', 'password1');
+    expect(res.statusCode).toBe(200);
+    expect(Array.isArray(res.body.fragments)).toBe(true);
+
+    if (res.body.fragments.length > 0) {
+      expect(res.body.fragments[0]).toHaveProperty('id');
+      expect(res.body.fragments[0]).toHaveProperty('ownerId');
+      expect(res.body.fragments[0]).toHaveProperty('type');
+      expect(res.body.fragments[0]).toHaveProperty('size');
+    }
+  });
+
+  test('expand query parameter returns full fragment details (expand=1)', async () => {
+    const res = await request(app).get('/v1/fragments?expand=1').auth('user1@email.com', 'password1');
     expect(res.statusCode).toBe(200);
     expect(Array.isArray(res.body.fragments)).toBe(true);
 

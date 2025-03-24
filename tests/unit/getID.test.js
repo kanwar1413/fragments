@@ -16,11 +16,12 @@ jest.mock('../../src/model/fragment');
 
 describe('GET /v1/fragment/:id', () => {
   const mockFragmentData = Buffer.from('fragment data');
+  const currentDate = new Date().toISOString();
   const mockFragment = {
-    id: '06dbf21a-52c0-4d03-87a9-8d567bd8673e',
+    id: '123e4567-e89b-12d3-a456-426614174000',
     ownerId: 'ownerId',
-    created: '2024-10-05T20:44:37.547Z',
-    updated: '2024-10-05T20:44:37.548Z',
+    created: currentDate,
+    updated: currentDate,
     type: 'text/plain',
     size: 13,
     getData: jest.fn().mockResolvedValue(mockFragmentData),
@@ -34,7 +35,7 @@ describe('GET /v1/fragment/:id', () => {
     Fragment.byId.mockResolvedValue(mockFragment);
 
     const response = await request(app)
-      .get('/v1/fragment/06dbf21a-52c0-4d03-87a9-8d567bd8673e');
+      .get('/v1/fragment/123e4567-e89b-12d3-a456-426614174000');
 
     expect(response.status).toBe(200);
   });
@@ -43,7 +44,7 @@ describe('GET /v1/fragment/:id', () => {
     Fragment.byId.mockResolvedValue(null);
 
     const response = await request(app)
-      .get('/v1/fragment/invalid-id');
+      .get('/v1/fragment/987f6543-e21c-4b56-98a1-123456789abc');
 
     expect(response.status).toBe(404);
     expect(response.body).toEqual({
@@ -60,7 +61,7 @@ describe('GET /v1/fragment/:id', () => {
     Fragment.byId.mockRejectedValue(new Error(errorMessage));
 
     const response = await request(app)
-      .get('/v1/fragment/06dbf21a-52c0-4d03-87a9-8d567bd8673e');
+      .get('/v1/fragment/123e4567-e89b-12d3-a456-426614174000');
 
     expect(response.status).toBe(500);
     expect(response.body).toEqual({
@@ -76,7 +77,7 @@ describe('GET /v1/fragment/:id', () => {
     Fragment.byId.mockResolvedValue(mockFragment);
 
     const response = await request(app)
-      .get('/v1/fragment/06dbf21a-52c0-4d03-87a9-8d567bd8673e');
+      .get('/v1/fragment/123e4567-e89b-12d3-a456-426614174000');
 
     expect(response.status).toBe(200);
     expect(response.headers['content-type']).toBe('text/plain');
@@ -88,7 +89,7 @@ describe('GET /v1/fragment/:id', () => {
     Fragment.byId.mockResolvedValue(mockFragment);
 
     const response = await request(app)
-      .get('/v1/fragment/06dbf21a-52c0-4d03-87a9-8d567bd8673e');
+      .get('/v1/fragment/123e4567-e89b-12d3-a456-426614174000');
 
     expect(response.status).toBe(200);
   });
@@ -103,7 +104,7 @@ describe('GET /v1/fragment/:id', () => {
     Fragment.byId.mockResolvedValue(mockFragmentWithDataError);
 
     const response = await request(app)
-      .get('/v1/fragment/06dbf21a-52c0-4d03-87a9-8d567bd8673e');
+      .get('/v1/fragment/123e4567-e89b-12d3-a456-426614174000');
 
     expect(response.status).toBe(404);
     expect(response.body).toEqual({
