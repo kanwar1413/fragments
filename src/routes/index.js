@@ -29,8 +29,8 @@ router.get('/', (req, res) => {
   res.status(200).json(
     createSuccessResponse({
       // TODO: make sure these are changed for your name and repo
-      author: 'Your Name',
-      githubUrl: 'https://github.com/your-github-account-username/fragments',
+      author: 'KANWAR PREET KAUR',
+      githubUrl: 'https://github.com/kanwar1413/fragments',
       version,
       // Include the hostname in the response
       hostname: hostname(),
