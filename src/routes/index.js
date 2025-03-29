@@ -4,7 +4,7 @@ const { hostname } = require('os');
 const express = require('express');
 
 // version and author from package.json
-const { version, author } = require('../../package.json');
+const { version } = require('../../package.json');
 
 // Our authentication middleware
 const { authenticate } = require('../auth');
