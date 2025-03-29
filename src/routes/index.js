@@ -1,5 +1,6 @@
 // src/routes/index.js
 
+const { hostname } = require('os');
 const express = require('express');
 
 // version and author from package.json
@@ -24,18 +25,18 @@ router.use(`/v1`, authenticate(), require('./api'));
  * we'll respond with a 200 OK.  If not, the server isn't healthy.
  */
 router.get('/', (req, res) => {
-  // Client's shouldn't cache this response (always request it fresh)
   res.setHeader('Cache-Control', 'no-cache');
-  // Send a 200 'OK' response
-  res.status(200).json(createSuccessResponse({
-    status: 'ok',
-    author,
-    // Use your own GitHub URL for this!
-    githubUrl: 'https://github.com/kanwar1413/fragments',
-    version,
-  }));
+  res.status(200).json(
+    createSuccessResponse({
+      // TODO: make sure these are changed for your name and repo
+      author: 'Your Name',
+      githubUrl: 'https://github.com/your-github-account-username/fragments',
+      version,
+      // Include the hostname in the response
+      hostname: hostname(),
+    })
+  );
 });
-
 
 
 module.exports = router;
