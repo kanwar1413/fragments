@@ -27,7 +27,7 @@
                   },
                   {
                     "name": "AWS_S3_BUCKET_NAME",
-                    "value": "kkaur531-fragments"   // Add your S3 Bucket name here
+                    "value": "kkaur531-fragments"   
                   }
             ],
             "environmentFiles": [],
