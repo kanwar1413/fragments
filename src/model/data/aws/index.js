@@ -1,4 +1,4 @@
-const MemoryDB = require('.memory/memory-db');
+/*const MemoryDB = require('.memory/memory-db');
 
 const s3Client = require('./s3Client');
 const { PutObjectCommand , GetObjectCommand, DeleteObjectCommand} = require('@aws-sdk/client-s3');
@@ -130,4 +130,4 @@ module.exports.writeFragment = writeFragment;
 module.exports.readFragment = readFragment;
 module.exports.writeFragmentData = writeFragmentData;
 module.exports.readFragmentData = readFragmentData;
-module.exports.deleteFragment = deleteFragment;
+module.exports.deleteFragment = deleteFragment;*/
