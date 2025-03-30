@@ -92,7 +92,7 @@ class Fragment {
   static async byId(ownerId, id) {
     let data = await readFragment(ownerId, id);
     if (!data) {
-      return Promise.reject(new Error('Not Found'));
+      return null;
     }
     return new Fragment(data);  
   }
