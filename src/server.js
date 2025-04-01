@@ -10,7 +10,7 @@ const logger = require('./logger');
 const app = require('./app');
 
 // Get the desired port from the process' environment. Default to `8080`
-const port = parseInt(process.env.PORT || '8080', 10);
+const port = parseInt(process.env.PORT || '80', 10);
 
 // Log environment variables if LOG_LEVEL=debug
 if (process.env.LOG_LEVEL === 'debug') {
