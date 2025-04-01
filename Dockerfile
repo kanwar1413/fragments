@@ -7,7 +7,7 @@ LABEL description="Fragments Node.js microservice"
 
 # Set environment variables for production
 ENV NODE_ENV=production
-ENV PORT=8080
+ENV PORT=80
 ENV NPM_CONFIG_LOGLEVEL=warn
 ENV NPM_CONFIG_COLOR=false
 
