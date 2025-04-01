@@ -97,6 +97,8 @@ jobs:
               AWS_SESSION_TOKEN=${{ secrets.AWS_SESSION_TOKEN }}
               AWS_COGNITO_POOL_ID=${{ secrets.AWS_COGNITO_POOL_ID }}
               AWS_COGNITO_CLIENT_ID=${{ secrets.AWS_COGNITO_CLIENT_ID }}
+              AWS_REGION=${{ secrets.AWS_REGION}}
+              API_URL=${{ secrets.API_URL}}
         - name: Deploy Amazon ECS task definition
           uses: aws-actions/amazon-ecs-deploy-task-definition@v2
           with:
