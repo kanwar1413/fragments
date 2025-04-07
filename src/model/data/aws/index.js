@@ -197,8 +197,8 @@ async function deleteFragment(ownerId, id) {
         error: 'Error deleting fragment data',
         ownerId,
         id,
-        S3Bucket: s3Params.Bucket,
-        S3Key: s3Params.Key,
+        S3Bucket: s3params.Bucket,
+        S3Key: s3params.Key,
         DynamoDBTableName: dynamoDBParams.TableName,
         DynamoDBKey: dynamoDBParams.Key,
       });
