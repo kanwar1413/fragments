@@ -32,7 +32,7 @@ services:
             - AWS_SESSION_TOKEN=test
         # Ports to publish
     ports:
-        - "8080:8080"
+        - "8080:80"
   dynamodb-local:
     image: amazon/dynamodb-local
     ports:

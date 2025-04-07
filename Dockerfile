@@ -35,7 +35,7 @@ WORKDIR /app
 COPY --from=builder /app /app
 
 # Expose required port
-EXPOSE 8080
+EXPOSE 80
 
 # Start the server
 CMD ["npm", "start"]
