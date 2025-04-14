@@ -19,10 +19,12 @@ app.use(cors());
 router.get('/fragments', require('./get'));
 // GET /v1/fragments/:id
 router.get('/fragments/:id', require('./getID'));
-
+// GET /v1/fragments/:id/info
 router.get('/fragments/:id/info',require('./getInfo'))
-
+// GET /v1/fragments/:id.ext
 router.get('/fragments/:id.:ext',require('./getID'))
+// DELETE /v1/fragments/:id
+router.delete('/fragments/:id', require('./delete'));
 
 // Support sending various Content-Types on the body up to 5M in size
 const rawBody = () =>
@@ -41,7 +43,8 @@ const rawBody = () =>
 // Use a raw body parser for POST, which will give a `Buffer` Object or `{}` at `req.body`
 // You can use Buffer.isBuffer(req.body) to test if it was parsed by the raw body parser.
 router.post('/fragments', rawBody(), require('./post'));
-router.delete('/fragments/:id',  require('./delete'))
 
+// PUT /v1/fragments/:id.newExt
+router.put('/fragments/:id.:ext', rawBody(), require('./put'));
 
 module.exports = router;

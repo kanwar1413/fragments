@@ -14,7 +14,7 @@ const port = parseInt(process.env.PORT || '80', 10);
 
 // Log environment variables if LOG_LEVEL=debug
 if (process.env.LOG_LEVEL === 'debug') {
-  //console.log('Environment Variables:', process.env);
+  
 }
 
 // Start a server listening on this port

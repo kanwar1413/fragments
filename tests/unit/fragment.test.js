@@ -8,9 +8,6 @@ const validTypes = [
   `text/plain`,
   'text/html',
   'application/json',
-  /*
-   Currently, only text/plain is supported. Others will be added later.
-
   `text/markdown`,
   `text/html`,
   `application/json`,
@@ -18,7 +15,7 @@ const validTypes = [
   `image/jpeg`,
   `image/webp`,
   `image/gif`,
-  */
+  
 ];
 
 describe('Fragment class', () => {

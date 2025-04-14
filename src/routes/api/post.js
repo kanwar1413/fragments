@@ -3,8 +3,6 @@ const { createErrorResponse } = require('../../response');
 const { Fragment } = require('../../model/fragment');
 const logger = require('../../logger');
 
-//const host = process.env.API_URL ;
-
 module.exports = async (req, res) => {
   // Log the authenticated user to debug potential 401 errors
   logger.debug({ user: req.user }, 'Authenticated user in POST /v1/fragments');

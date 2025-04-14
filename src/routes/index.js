@@ -28,7 +28,6 @@ router.get('/', (req, res) => {
   res.setHeader('Cache-Control', 'no-cache');
   res.status(200).json(
     createSuccessResponse({
-      // TODO: make sure these are changed for your name and repo
       author: 'KANWAR PREET KAUR',
       githubUrl: 'https://github.com/kanwar1413/fragments',
       version,
