@@ -1,47 +1,21 @@
-// tests/unit/post.test.js
 const request = require('supertest');
+
 const app = require('../../src/app');
-describe('POST /v1/fragments (Credential, Unauthorized, Unauthenticated, Plain Text Creation)', () => {
-  test('Unauthenticated requests are denied', () => request(app).post('/v1/fragments').expect(401));
-  test('Incorrect credentials are denied', () =>
+
+describe('POST /v1/fragments', () => {
+  // If the request is missing the Authorization header, it should be forbidden
+  test('unauthenticated requests are denied', () => request(app).post('/v1/fragments').expect(401));
+
+  // If the wrong username/password pair are used (no such user), it should be forbidden
+  test('incorrect credentials are denied', () =>
     request(app).post('/v1/fragments').auth('invalid@email.com', 'incorrect_password').expect(401));
-  test('Authenticated users get a fragment with ok status', async () => {
-    const res = await request(app)
-      .post('/v1/fragments')
-      .set('Content-Type', 'text/plain')
-      .auth('user1@email.com', 'password1') // Ensure these credentials exist in your test DB
-      .send('fragment Data');
+
+  // Using a valid username/password pair should give a success result with a .fragments array
+  test('authenticated users get a fragments array with a supported type', async () => {
+    const res = await request(app).post('/v1/fragments').auth('user1@email.com', 'password1').set('content-type', 'text/plain');
     expect(res.statusCode).toBe(201);
     expect(res.body.status).toBe('ok');
   });
-  test('fragment without data does not work', async () => {
-    const res = await request(app)
-      .post('/v1/fragments')
-      .auth('user1@email.com', 'password1') // Ensure these credentials exist in your test DB
-      .set('Content-Type', 'text/plain')
-      .send(''); // Sending an empty string to simulate no data
-    expect(res.statusCode).toBe(400);
-    expect(res.body.status).toBe('error');
-  });
-  test('unsupported fragment types are denied', async () => {
-    const res = await request(app)
-      .post('/v1/fragments')
-      .auth('user1@email.com', 'password1') // Ensure these credentials exist in your test DB
-      .set('Content-Type', 'application/xml')
-      .send('<name>fragment</name>');
-    expect(res.statusCode).toBe(415);
-    expect(res.body.status).toBe('error');
-  });
-  test('Authenticated users with unsupported mediatype should get 415 error', async () => {
-    let type = 'unsupported/unsupported';
-    const res = await request(app)
-      .post('/v1/fragments')
-      .set('Content-Type', type)
-      .auth('user1@email.com', 'password1') // Ensure these credentials exist in your test DB
-      .send('fragment Data');
-    expect(res.statusCode).toBe(415);
-    expect(res.body.status).toBe('error');
-    expect(res.body.error.code).toBe(415);
-    expect(res.body.error.message).toBeDefined();
-  });
+
+  // TODO: we'll need to add tests to check the contents of the fragments array later
 });

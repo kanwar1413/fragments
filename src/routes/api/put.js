@@ -1,61 +1,49 @@
-// src/routes/api/put.js
-
 const { Fragment } = require('../../model/fragment');
 const { createSuccessResponse, createErrorResponse } = require('../../response');
-const logger = require('../../logger');
 
 module.exports = async (req, res) => {
-  const { user: ownerId } = req;
-  const { id, ext } = req.params;
+  const frag_id = req.params.id;
 
   try {
-    logger.info(`Attempting to update fragment ${id} to extension: ${ext}`);
+    const fragment = await Fragment.byId(req.user, frag_id);
 
-    // Check if the fragment exists
-    const fragment = await Fragment.byId(ownerId, id);
+    // If no fragment found, return 404
     if (!fragment) {
-      logger.warn(`Fragment not found for ID: ${id}`);
-      return res.status(404).json(createErrorResponse(404, 'Fragment not found'));
-    }
-
-    // Get the current fragment data
-    const currentData = await fragment.getData();
-
-    // Convert the data to the new extension
-    const { convertedData, convertedType } = await fragment.convertType(currentData, ext);
-    if (!convertedData) {
-      logger.warn(`Invalid conversion attempted for fragment ${id} to extension ${ext}`);
-      return res.status(415).json(
-        createErrorResponse(415, 'Fragment cannot be converted to this type or extension is invalid')
+      return res.status(404).json(
+        createErrorResponse(404, {
+          message: 'Fragment not found',
+        })
       );
     }
 
-    // Update fragment data, type, and extension
-    fragment.setData(convertedData);
-    fragment.type = convertedType;
-    fragment.extension = ext;
+    const originalType = fragment.type;
+    const updateType = req.get('Content-Type');
 
-    await fragment.save();
+    // If type matches, allow update
+    if (originalType === updateType) {
+      await fragment.setData(req.body);
 
-    logger.info(`Successfully updated fragment ${id} to extension ${ext}`);
+      return res.status(200).json(
+        createSuccessResponse({
+          status: 'ok',
+          fragment,
+        })
+      );
+    }
 
-    // Create a response object with only the necessary properties
-    const responseFragment = {
-      id: fragment.id,
-      ownerId: fragment.ownerId,
-      created: fragment.created,
-      updated: fragment.updated,
-      size: fragment.size,
-      type: convertedType,
-      extension: ext
-    };
+    // Type mismatch — return 400
+    return res.status(400).json(
+      createErrorResponse(400, {
+        message: "A fragment's type cannot be changed after it is created",
+      })
+    );
+  } catch (err) {
+    console.error('PUT error:', err);
 
-    return res.status(200).json(createSuccessResponse({ fragment: responseFragment }));
-
-  } catch (error) {
-    logger.error(`Error updating fragment ${id} extension: ${error.message}`, { error });
     return res.status(500).json(
-      createErrorResponse(500, 'An error occurred while updating the fragment extension')
+      createErrorResponse(500, {
+        message: 'Internal Server Error',
+      })
     );
   }
 };

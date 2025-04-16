@@ -1,107 +1,102 @@
 const { Fragment } = require('../../model/fragment');
-const { createErrorResponse } = require('../../response');
-const logger = require('../../logger');
+const { createErrorResponse, createSuccessResponse } = require('../../response');
+const md = require('markdown-it')();
+const sharp = require('sharp');
 
-/**
- * Handle GET requests for fragments, with optional format conversion
- */
 module.exports = async (req, res) => {
-  const { user: ownerId } = req;
-  const { id, ext } = req.params;  // The extension will be parsed from the route params
-
-  try {
-    logger.info(`Fetching fragment by ID: ${id}${ext ? ` with conversion to ${ext}` : ''}`);
-
-    // Get the fragment metadata
-    const fragment = await Fragment.byId(ownerId, id);
-
-    if (!fragment) {
-      logger.warn(`Fragment not found for ID: ${id}`);
-      return res.status(404).json(createErrorResponse(404, 'Fragment not found'));
-    }
-
     try {
-      // If no extension is provided, return the fragment in its original format
-      if (!ext) {
-        try {
-          const data = await fragment.getData();
-          
-          // Set content type and length headers
-          res.setHeader('Content-Type', fragment.type);
-          res.setHeader('Content-Length', fragment.size);
-          
-          // Send the data
-          return res.status(200).send(data);
-        } catch{
-          logger.warn(`Fragment data not found for ID: ${id}`);
-          return res.status(404).json(createErrorResponse(404, 'An error occurred while retrieving fragment data'));
+        const id = req.params.id.split('.')[0];
+        const user = req.user;
+        const fragment_data = await Fragment.byId(user, id);
+        if (!fragment_data) {
+          return createErrorResponse(
+            res.status(404).json({
+              code: 404,
+              message: 'Fragment not found',
+            })
+          );
         }
-      }
-      
-      // Rest of the code remains the same...
-      
-      // Handle conversion based on the requested extension
-      // First check if the conversion is supported
-      if (!fragment.isSupportedConversion(ext)) {
-        logger.warn(`Unsupported conversion from ${fragment.type} to ${ext} for fragment ${id}`);
-        return res.status(415).json(
-          createErrorResponse(415, `Conversion from ${fragment.type} to ${ext} is not supported`)
-        );
-      }
-      
-      // Get the converted data
-      const convertedData = await fragment.getConvertedData(ext);
-      
-      // Determine the content type for the converted data
-      const convertedType = getConvertedContentType(fragment.type, ext);
-      
-      // Set content headers
-      res.setHeader('Content-Type', convertedType);
-      
-      // For binary data like images, don't set Content-Length as it might change after conversion
-      if (!convertedType.startsWith('image/')) {
-        res.setHeader('Content-Length', Buffer.byteLength(convertedData));
-      }
-      
-      // Send the converted data
-      logger.info(`Successfully sent converted fragment (${ext}) for ID: ${id}`);
-      return res.status(200).send(convertedData);
-      
-    } catch (dataError) {
-      logger.error(`Error retrieving fragment data with ID ${id}: ${dataError.message}`, { error: dataError });
-      return res.status(500).json(
-        createErrorResponse(500, 'An error occurred while retrieving or converting fragment data')
-      );
+        const extension = req.params.id.split('.')[1];
+        const format = getContentType(extension, fragment_data.mimeType);
+
+        if (!fragment_data.formats.includes(format)) {
+            return createErrorResponse(
+                res.status(415).json({
+                    message: "Invalid type conversion",
+                })
+            );
+        }
+
+        const dataResult = await fragment_data.getData();
+        let dataToSend = dataResult;
+
+        if (isValidConversion(extension)) {
+            try{
+            dataToSend = await  convertData(dataResult, format);
+            }catch(err) {
+                return createErrorResponse(
+                    res.status(500).json({
+                        code: 500,
+                        message: 'No data Found',
+                    })
+                );
+            }
+        } 
+
+        res.setHeader('Content-Type', format);
+        return createSuccessResponse(res.status(200).send(dataToSend));
+    } catch (err) {
+        
+            return createErrorResponse(
+                res.status(404).json({
+                    code: 404,
+                    message: 'No data Found',
+                })
+            );
+        
     }
-  } catch (error) {
-    logger.error(`Error fetching fragment with ID ${id}: ${error.message}`, { error });
-    return res.status(500).json(
-      createErrorResponse(500, 'An error occurred while fetching the fragment')
-    );
-  }
 };
 
-/**
- * Helper function to determine the content type for converted data
- */
-function getConvertedContentType(originalType, extension) {
-  // Map of extensions to content types
-  const extensionToContentType = {
-    'txt': 'text/plain',
-    'html': 'text/html',
-    'md': 'text/markdown',
-    'json': 'application/json',
-    'yaml': 'application/yaml',
-    'yml': 'application/yaml',
-    'png': 'image/png',
-    'jpg': 'image/jpeg',
-    'jpeg': 'image/jpeg',
-    'webp': 'image/webp',
-    'gif': 'image/gif',
-    'avif': 'image/avif',
-    'csv': 'text/csv'
-  };
-  
-  // Return the appropriate content type based on the extension
-  return extensionToContentType[extension] || originalType;
+function getContentType(extension, mimeType) {
+    
+    const extensionToContentType = {
+        'txt': 'text/plain',
+        'md': 'text/markdown',
+        'html': 'text/html',
+        'json': 'application/json',
+        'png': 'image/png',
+        'jpg': 'image/jpeg',
+        'webp': 'image/webp',
+        'gif': 'image/gif',
+
+    };
+    if (extension && !Object.prototype.hasOwnProperty.call(extensionToContentType, extension)) {
+        return 'Invalid';
+    }
+
+    // Check if the extension is valid, otherwise, use the provided MIME type
+    return extensionToContentType[extension] || mimeType;
+}
+
+function isValidConversion(extension) {
+    const validExtensions = ['txt', 'md', 'html', 'json', 'png', 'jpg', 'webp', 'gif'];
+    return validExtensions.includes(extension);
+}
+
+async function  convertData(data, contentType) {
+    if (contentType === 'text/html') {
+        return md.render(data.toString());
+    }else if (contentType === 'image/png') {
+        return await sharp(data).png().toBuffer();
+              } else if (contentType === 'image/jpeg') {
+                return await sharp(data).jpeg().toBuffer();
+              } else if (contentType === 'image/gif') {
+                return await sharp(data).gif().toBuffer();
+              } else if (contentType === 'image/webp') {
+                return await sharp(data).webp().toBuffer();
+              }
+     else {
+        // For text/plain and other types, return the data as is
+        return data;
+     }
 }

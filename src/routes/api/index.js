@@ -45,6 +45,6 @@ const rawBody = () =>
 router.post('/fragments', rawBody(), require('./post'));
 
 // PUT /v1/fragments/:id.newExt
-router.put('/fragments/:id.:ext', rawBody(), require('./put'));
+router.put('/fragments/:id', rawBody(), require('./put'));
 
 module.exports = router;

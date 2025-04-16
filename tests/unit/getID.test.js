@@ -1,118 +1,118 @@
+// tests/unit/getById.test.js
+
 const request = require('supertest');
-const express = require('express');
-const { Fragment } = require('../../src/model/fragment');
-const getByIdRoute = require('../../src/routes/api/getID');
-const app = express();
-app.use(express.json());
+const app = require('../../src/app');
 
-app.use((req, res, next) => {
-  req.user = { id: 'ownerId' };
-  next();
-});
+describe('GetByID /v1/fragments', () => {
+    test('Split Id with right extension', async () => {
+        const response = await request(app)
+            .get('/v1/fragments/12345.txt')
+            .auth('user1@email.com', 'password1');
 
-app.use('/v1/fragment', getByIdRoute);
-
-jest.mock('../../src/model/fragment');
-
-describe('GET /v1/fragment/:id', () => {
-  const mockFragmentData = Buffer.from('fragment data');
-  const currentDate = new Date().toISOString();
-  const mockFragment = {
-    id: '123e4567-e89b-12d3-a456-426614174000',
-    ownerId: 'ownerId',
-    created: currentDate,
-    updated: currentDate,
-    type: 'text/plain',
-    size: 13,
-    getData: jest.fn().mockResolvedValue(mockFragmentData),
-  };
-
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
-
-  test('should return a fragment when found', async () => {
-    Fragment.byId.mockResolvedValue(mockFragment);
-
-    const response = await request(app)
-      .get('/v1/fragment/123e4567-e89b-12d3-a456-426614174000');
-
-    expect(response.status).toBe(200);
-  });
-
-  test('should return 404 if fragment not found', async () => {
-    Fragment.byId.mockResolvedValue(null);
-
-    const response = await request(app)
-      .get('/v1/fragment/987f6543-e21c-4b56-98a1-123456789abc');
-
-    expect(response.status).toBe(404);
-    expect(response.body).toEqual({
-      status: 'error',
-      error: {
-        code: 404,
-        message: 'Fragment not found',
-      },
+        expect(response.status).not.toBe(415);
     });
-  });
 
-  test('should return 500 on error', async () => {
-    const errorMessage = 'Database connection error';
-    Fragment.byId.mockRejectedValue(new Error(errorMessage));
+    test('Split Id with wrong extension', async () => {
+        const createFragmentResponse = await request(app)
+            .post('/v1/fragments')
+            .auth('user1@email.com', 'password1')
+            .set('content-type', 'text/plain')
+            .send("This is data");
 
-    const response = await request(app)
-      .get('/v1/fragment/123e4567-e89b-12d3-a456-426614174000');
+        expect(createFragmentResponse.status).toBe(201);
 
-    expect(response.status).toBe(500);
-    expect(response.body).toEqual({
-      status: 'error',
-      error: {
-        code: 500,
-        message: 'An error occurred while fetching the fragment',
-      },
+        const id = JSON.parse(createFragmentResponse.text).fragments.id;
+        const retrieveFragmentResponse = await request(app)
+            .get(`/v1/fragments/${id}.html`)
+            .auth('user1@email.com', 'password1');
+
+        expect(retrieveFragmentResponse.status).toBe(415);
     });
-  });
 
-  test('should return the fragment data with the correct Content-Type and Content-Length headers', async () => {
-    Fragment.byId.mockResolvedValue(mockFragment);
-
-    const response = await request(app)
-      .get('/v1/fragment/123e4567-e89b-12d3-a456-426614174000');
-
-    expect(response.status).toBe(200);
-    expect(response.headers['content-type']).toBe('text/plain');
-    expect(response.headers['content-length']).toBe('13');
-    expect(response.text).toBe('fragment data');
-  });
-
-  test('should return the correct fragment data when the ID matches', async () => {
-    Fragment.byId.mockResolvedValue(mockFragment);
-
-    const response = await request(app)
-      .get('/v1/fragment/123e4567-e89b-12d3-a456-426614174000');
-
-    expect(response.status).toBe(200);
-  });
-
-  // New test case to cover getData() error handling
-  test('should return 404 when getData() fails', async () => {
-    const mockFragmentWithDataError = {
-      ...mockFragment,
-      getData: jest.fn().mockRejectedValue(new Error('Failed to retrieve data')),
-    };
-
-    Fragment.byId.mockResolvedValue(mockFragmentWithDataError);
-
-    const response = await request(app)
-      .get('/v1/fragment/123e4567-e89b-12d3-a456-426614174000');
-
-    expect(response.status).toBe(404);
-    expect(response.body).toEqual({
-      status: 'error',
-      error: {
-        code: 404,
-        message: 'An error occurred while retrieving fragment data',
-      },
+    test('Unauthenticated requests are denied', () => {
+        return request(app).get('/v1/fragments').expect(401);
     });
-  });
+
+    test('Incorrect credentials are denied', () => {
+        return request(app)
+            .get('/v1/fragments')
+            .auth('invalid@email.com', 'incorrect_password')
+            .expect(401);
+    });
+
+    test('Authenticated users get a fragments array with Incorrect ID', async () => {
+        const id = 1;
+        const res = await request(app)
+            .get(`/v1/fragments${id}`)
+            .auth('user1@email.com', 'password1');
+
+        expect(res.status).toBe(404);
+    });
+
+    test('Authenticated users get a fragments array with Correct ID', async () => {
+        const res = await request(app)
+            .post('/v1/fragments')
+            .auth('user1@email.com', 'password1')
+            .set('content-type', 'text/plain')
+            .send("This is data");
+
+        const id = JSON.parse(res.text).fragments.id;
+        const res2 = await request(app)
+            .get(`/v1/fragments/${id}`)
+            .auth('user1@email.com', 'password1');
+
+        expect(res2.status).toBe(200);
+    });
+
+    test('Fragment with Markdown Format is Converted to HTML', async () => {
+        const createFragmentResponse = await request(app)
+            .post('/v1/fragments')
+            .auth('user1@email.com', 'password1')
+            .set('content-type', 'text/markdown')
+            .send("# This is a Markdown Title");
+
+        expect(createFragmentResponse.status).toBe(201);
+
+        const id = JSON.parse(createFragmentResponse.text).fragments.id;
+        const retrieveFragmentResponse = await request(app)
+            .get(`/v1/fragments/${id}.html`)
+            .auth('user1@email.com', 'password1');
+
+        expect(retrieveFragmentResponse.status).toBe(200);
+    });
+
+    test('Fragment with Invalid extension', async () => {
+        const createFragmentResponse = await request(app)
+            .post('/v1/fragments')
+            .auth('user1@email.com', 'password1')
+            .set('content-type', 'text/plain')
+            .send("This is data");
+
+        expect(createFragmentResponse.status).toBe(201);
+
+        const id = JSON.parse(createFragmentResponse.text).fragments.id;
+        const retrieveFragmentResponse = await request(app)
+            .get(`/v1/fragments/${id}.invalid`)
+            .auth('user1@email.com', 'password1');
+
+        expect(retrieveFragmentResponse.status).toBe(415);
+    });
+
+    test('Conversion of Images', async () => {
+        const createFragmentResponse = await request(app)
+            .post('/v1/fragments')
+            .auth('user1@email.com', 'password1')
+            .set('content-type', 'image/png')
+            .send("fakeImageData");
+
+        expect(createFragmentResponse.status).toBe(201);
+
+        const id = JSON.parse(createFragmentResponse.text).fragments.id;
+        const retrieveFragmentResponse = await request(app)
+            .get(`/v1/fragments/${id}.jpg`)
+            .auth('user1@email.com', 'password1');
+
+        expect(retrieveFragmentResponse.status).toBe(500);
+     
+    });
 });

@@ -1,121 +1,53 @@
 const request = require('supertest');
-const express = require('express');
-const { Fragment } = require('../../src/model/fragment');
-const putRoute = require('../../src/routes/api/put');
-const app = express();
-app.use(express.json());
+const app = require('../../src/app');
 
-app.use((req, res, next) => {
-  req.user = { id: 'ownerId' };
-  next();
-});
+describe('PUT /v1/fragments', () => {
+  let fragmentId;
 
-app.use('/v1/fragment', putRoute);
+  // If the request is missing the Authorization header, it should be forbidden
+  test('authenticated users post a fragments array with a supported type', async () => {
+    const postRes = await request(app)
+      .post('/v1/fragments')
+      .auth('user1@email.com', 'password1')
+      .set('content-type', 'text/plain')
+      .send('Testing');
 
-jest.mock('../../src/model/fragment');
-
-describe('PUT /v1/fragment/:id/:ext', () => {
-  test('basic test', () => {
-    expect(true).toBe(true);
+    expect(postRes.statusCode).toBe(201);
+    expect(postRes.body.status).toBe('ok');
+    // Add this log to check the structure
+    console.log('Response body:', postRes.body);
+      
+    // Update this line based on your actual response structure
+    fragmentId = postRes.body.fragments.id;
   });
 
-  describe('PUT /v1/fragment/:id/:ext', () => {
-    const mockFragment = {
-      id: '06dbf21a-52c0-4d03-87a9-8d567bd8673e',
-      ownerId: 'ownerId',
-      created: '2024-10-05T20:44:37.547Z',
-      updated: '2024-10-05T20:44:37.548Z',
-      type: 'text/plain',
-      size: 14,
-      getData: jest.fn(),
-      convertType: jest.fn(),
-      setData: jest.fn(),
-      save: jest.fn(),
-    };
+  test('user trying to update the fragment', async () => {
+    const updateRes = await request(app)
+      .put(`/v1/fragments/${fragmentId}`)
+      .auth('user1@email.com', 'password1')
+      .set('content-type', 'text/plain')
+      .send('Updated-data');
 
-    beforeEach(() => {
-      jest.clearAllMocks();
-    });
+    expect(updateRes.statusCode).toBe(200);
+  });
 
-    test('should update a fragment when found and conversion is successful', async () => {
-      // Mock the behavior of the fragment retrieval and conversion
-      Fragment.byId.mockResolvedValue(mockFragment);
-      mockFragment.getData.mockResolvedValue('currentData');
-      mockFragment.convertType.mockResolvedValue({ convertedData: 'newData', convertedType: 'newType' });
+  test('user trying to update with wrong type fragment', async () => {
+    const updateRes = await request(app)
+      .put(`/v1/fragments/${fragmentId}`)
+      .auth('user1@email.com', 'password1')
+      .set('content-type', 'text/html')
+      .send('Updated-data');
 
-      // Perform the PUT request
-      const response = await request(app)
-        .put('/v1/fragment/06dbf21a-52c0-4d03-87a9-8d567bd8673e/newExt');
+    expect(updateRes.statusCode).toBe(400);
+  });
 
-      // Verify the response status
-      expect(response.status).toBe(200);
+  test('user trying to update with invalid fragment', async () => {
+    const updateRes = await request(app)
+      .put(`/v1/fragments/invalidId`)
+      .auth('user1@email.com', 'password1')
+      .set('content-type', 'text/html')
+      .send('Updated-data');
 
-      // Create a new expected fragment object including the extension
-      const expectedFragment = {
-        id: '06dbf21a-52c0-4d03-87a9-8d567bd8673e',
-        ownerId: 'ownerId',
-        created: '2024-10-05T20:44:37.547Z',
-        updated: '2024-10-05T20:44:37.548Z',
-        size: 14,
-        type: 'newType',
-      };
-
-      // Check the response body
-      expect(response.body).toEqual({
-        status: 'ok',
-        fragment: expectedFragment,
-      });
-    });
-
-    test('should return 404 if fragment not found', async () => {
-      Fragment.byId.mockResolvedValue(null);
-
-      const response = await request(app)
-        .put('/v1/fragment/invalid-id/newExt');
-
-      expect(response.status).toBe(404);
-      expect(response.body).toEqual({
-        status: 'error',
-        error: {
-          code: 404,
-          message: 'Fragment not found',
-        },
-      });
-    });
-
-    test('should return 415 if conversion is invalid', async () => {
-      Fragment.byId.mockResolvedValue(mockFragment);
-      mockFragment.getData.mockResolvedValue('currentData');
-      mockFragment.convertType.mockResolvedValue({ convertedData: null });
-
-      const response = await request(app)
-        .put('/v1/fragment/06dbf21a-52c0-4d03-87a9-8d567bd8673e/invalidExt');
-
-      expect(response.status).toBe(415);
-      expect(response.body).toEqual({
-        status: 'error',
-        error: {
-          code: 415,
-          message: 'Fragment cannot be converted to this type or extension is invalid',
-        },
-      });
-    });
-
-    test('should return 500 on error', async () => {
-      const errorMessage = 'Database connection error';
-      Fragment.byId.mockRejectedValue(new Error(errorMessage));
-
-      const response = await request(app)
-        .put('/v1/fragment/06dbf21a-52c0-4d03-87a9-8d567bd8673e/newExt');
-
-      expect(response.status).toBe(500);
-      expect(response.body).toEqual({
-        status: 'error',
-        error: {
-          code: 500,
-          message: 'An error occurred while updating the fragment extension',
-        },
-      });
-    });
+    expect(updateRes.statusCode).toBe(404);
   });
 });
