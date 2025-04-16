@@ -45,7 +45,7 @@ module.exports = async (req, res) => {
 
         res.setHeader('Content-Type', format);
         return createSuccessResponse(res.status(200).send(dataToSend));
-    } catch (err) {
+    } catch{
         
             return createErrorResponse(
                 res.status(404).json({
