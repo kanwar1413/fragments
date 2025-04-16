@@ -1,117 +1,131 @@
-# Step 1: Create a JSON Fragment
-# Perform an authenticated POST request to create a JSON fragment.
+# 1. POST a new JSON fragment to http://localhost:8080 as an authorized user. 
 POST http://localhost:8080/v1/fragments
-
-# Set the request headers.
 Content-Type: application/json
-
-# Include HTTP Basic Auth credentials.
 [BasicAuth]
 user1@email.com:password1
+`{"service": "DynamoDB"}`
 
-# Request body for creating a JSON fragment.
-{
-    "service":"DynamoDB"
-}
-
-# Step 2: Capture Fragment Information
-# Capture the URL and ID of the created fragment from the response headers and body.
+# 2. Confirm that the server returns a 201, and capture the Location header value to a variable named url
 HTTP/1.1 201
+
+[Asserts]
+header "Location" matches "^http:\/\/localhost:8080\/v1\/fragments\/[A-Za-z0-9_-]+$"
+jsonpath "$.status" == "ok"
+jsonpath "$.fragments.id" matches "^([0-9a-fA-F]{32}|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$"
+jsonpath "$.fragments.ownerId" matches "^[0-9a-fA-F]+$"
+jsonpath "$.fragments.created" isString
+jsonpath "$.fragments.updated" isString
+jsonpath "$.fragments.type" == "application/json"
 [Captures]
 fragment1_url: header "Location"
-fragment1_id: jsonpath "$.fragment.id"
+fragment1_id: jsonpath "$.fragments.id"
 
-# Step 3: Retrieve and Validate Fragment Metadata
-# Perform a GET request to retrieve fragment metadata and validate its properties.
+
+# 3. GET the fragment you just created using the url as an authorized user.
 GET {{fragment1_url}}/info
 [BasicAuth]
 user1@email.com:password1
 
+
 HTTP/1.1 200
+
 [Asserts]
 jsonpath "$.status" == "ok"
 jsonpath "$.fragment.id" == {{fragment1_id}}
-
-# Validate metadata properties.
+jsonpath "$.fragment.type" == "application/json"
 jsonpath "$.fragment.ownerId" matches "^[0-9a-fA-F]+$"
 jsonpath "$.fragment.created" isString
 jsonpath "$.fragment.updated" isString
-jsonpath "$.fragment.type" matches "^application/json(; charset=utf-8)?$"
-jsonpath "$.fragment.size" == 28
 
-# Step 4: Create a Markdown Fragment
-# Perform an authenticated POST request to create a Markdown fragment.
+
+
+
+
+#4 Post a Second Markdown Fragment as the same user
 POST http://localhost:8080/v1/fragments
-Content-Type: text/markdown
+Content-Type:  text/markdown
 [BasicAuth]
 user1@email.com:password1
-
-# Request body for the Markdown fragment.
 `DynamoDB is **great**.`
 
-# Step 5: Capture Information for Second Fragment
-# Capture the URL and ID of the second created fragment.
+
+
+
+# 5 Confirm that the server returns a 201
 HTTP/1.1 201
+
+[Asserts]
+header "Location" matches "^http:\/\/localhost:8080\/v1\/fragments\/[A-Za-z0-9_-]+$"
+jsonpath "$.status" == "ok"
+jsonpath "$.fragments.id" matches "^([0-9a-fA-F]{32}|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$"
+jsonpath "$.fragments.ownerId" matches "^[0-9a-fA-F]+$"
+jsonpath "$.fragments.created" isString
+jsonpath "$.fragments.updated" isString
+jsonpath "$.fragments.type" == "text/markdown"
 [Captures]
 fragment2_url: header "Location"
-fragment2_id: jsonpath "$.fragment.id"
+fragment2_id: jsonpath "$.fragments.id"
 
-# Step 6: Retrieve and Validate Metadata for Second Fragment
-# Perform a GET request to retrieve metadata for the second fragment and validate its properties.
+
+
+# 6. GET the fragment you just created using the url as an authorized user.
 GET {{fragment2_url}}/info
 [BasicAuth]
 user1@email.com:password1
+
 
 HTTP/1.1 200
 [Asserts]
 jsonpath "$.status" == "ok"
 jsonpath "$.fragment.id" == {{fragment2_id}}
-
-# Validate metadata properties.
+jsonpath "$.fragment.type" == "text/markdown"
 jsonpath "$.fragment.ownerId" matches "^[0-9a-fA-F]+$"
 jsonpath "$.fragment.created" isString
 jsonpath "$.fragment.updated" isString
-jsonpath "$.fragment.type" matches "text/markdown"
-jsonpath "$.fragment.size" == 22
 
-# Step 7: Retrieve Fragments List and Confirm Inclusion
-# Perform a GET request to retrieve a list of fragments and confirm inclusion of fragment IDs.
+
+
+
+
+#7 GET all of the fragments for the same authorized user without expanding them 
 GET http://localhost:8080/v1/fragments
 [BasicAuth]
 user1@email.com:password1
 
+# We expect to get back an HTTP 200
 HTTP/1.1 200
+
+#  confirm that the list of fragments includes the two id 
 [Asserts]
 jsonpath "$.fragments" includes {{fragment1_id}}
 jsonpath "$.fragments" includes {{fragment2_id}}
 
-# Step 8: Delete the First Fragment
-# Perform a DELETE request to delete the first created fragment.
+# 8. DELETE the first fragment
 DELETE {{fragment1_url}}
 [BasicAuth]
 user1@email.com:password1
 
-# Step 9: Confirm Deletion
-# Confirm that the server returns a 200 status after fragment deletion.
+# We expect to get back an HTTP 200
 HTTP/1.1 200
 
-# Step 10: Attempt to Retrieve Deleted Fragment (Expecting 404)
-# Attempt to retrieve the deleted fragment and confirm the server returns a 404 status.
-GET {{fragment1_url}}/info
+# 10. Try to GET the first fragment again using the url as an authorized user.
+GET {{fragment1_url}}
+
 [BasicAuth]
 user1@email.com:password1
 
-# Step 11: Confirm Deleted Fragment (Expecting 404)
-# Confirm that the server returns a 404 status, indicating the fragment is deleted.
+# 11. Confirm that the server returns error
 HTTP/1.1 404
 
-# Step 12: Retrieve Fragments List Again and Confirm Exclusion
-# Perform a GET request to retrieve a list of fragments and confirm exclusion of the first fragment ID.
+# 12. GET all of the fragments for the same authorized user without expanding them
 GET http://localhost:8080/v1/fragments
 [BasicAuth]
 user1@email.com:password1
 
+# We expect to get back an HTTP 200
 HTTP/1.1 200
+
+# confirm that the first id is NOT included but that the second id is
 [Asserts]
-jsonpath "$.fragments" not includes {{fragment1_id}}
+jsonpath "$.fragments" not includes "{{fragment1_id}}"
 jsonpath "$.fragments" includes {{fragment2_id}}
