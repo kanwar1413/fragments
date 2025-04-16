@@ -33,7 +33,7 @@ module.exports = async (req, res) => {
         if (isValidConversion(extension)) {
             try{
             dataToSend = await  convertData(dataResult, format);
-            }catch(err) {
+            }catch{
                 return createErrorResponse(
                     res.status(500).json({
                         code: 500,
