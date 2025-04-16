@@ -32,7 +32,7 @@ module.exports = async (req, res) => {
           
           // Send the data
           return res.status(200).send(data);
-        } catch (getDataError) {
+        } catch{
           logger.warn(`Fragment data not found for ID: ${id}`);
           return res.status(404).json(createErrorResponse(404, 'An error occurred while retrieving fragment data'));
         }
