@@ -126,8 +126,6 @@ npm install --save-dev nodemon
   npm run lint
 ```
 
----
-
 ### 8. For jq
    Install
 
