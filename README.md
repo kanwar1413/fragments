@@ -18,7 +18,7 @@ It is designed to run on **AWS (ECS, S3, DynamoDB, Cognito, ECR)** but also supp
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 - **Node.js + Express** (API server)
 - **Amazon DynamoDB** (fragments metadata)
 - **Amazon S3** (fragments data storage)
@@ -31,7 +31,7 @@ It is designed to run on **AWS (ECS, S3, DynamoDB, Cognito, ECR)** but also supp
 ---
 
 
-## ⚡ Getting Started
+## Getting Started
 
 ### 1. Clone the repository
 
@@ -82,7 +82,7 @@ Create a .env file:
   eslint, globals, @eslint/js
   ✔ Would you like to install them now? · No / Yes
   ✔ Which package manager do you want to use? · npm
-  ☕️Installing...
+  Installing...
 
   added 8 packages, removed 11 packages, changed 12 packages, and audited 224 packages in 2s
 
